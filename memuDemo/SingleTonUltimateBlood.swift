@@ -13,10 +13,12 @@ import SwiftyJSON
 
 
 extension UIViewController {
-    class func displaySpinner(onView : UIView) -> UIView {
+    func displaySpinner(onView : UIView) -> UIView {
         let spinnerView = UIView.init(frame: onView.bounds)
         spinnerView.backgroundColor = UIColor.init(red: 1, green: 1, blue: 1, alpha: 1)
-        let ai = UIActivityIndicatorView.init(activityIndicatorStyle: .gray)
+        let ai = UIActivityIndicatorView.init(activityIndicatorStyle: .whiteLarge)
+        ai.color = .black                
+        ai.sizeToFit()
         ai.startAnimating()
         ai.center = spinnerView.center
         
@@ -28,9 +30,10 @@ extension UIViewController {
         return spinnerView
     }
     
-    class func removeSpinner(spinner :UIView) {
+    func removeSpinner(spinner :UIView? = nil) {
+        if (spinner==nil) {return}
         DispatchQueue.main.async {
-            spinner.removeFromSuperview()
+            spinner!.removeFromSuperview()
         }
     }   
 }
@@ -44,6 +47,26 @@ extension UILabel {
             self.text = html;
         }
         font = UIFont(name: "Helvetica", size: 14)
+    }
+}
+
+extension UIColor {
+    convenience init(hexString: String) {
+        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int = UInt32()
+        Scanner(string: hex).scanHexInt32(&int)
+        let a, r, g, b: UInt32
+        switch hex.characters.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
     }
 }
 
@@ -71,45 +94,52 @@ class SingleTonUltimateBlood
     var StringLblText       :  String  = ""
     var StringText          :  String  = ""
     var StringDataField     :  String  = ""
-    var StringUserName      :  String  = ""
+    var StringUserName      :  String  = ""    
+    var StringVisibleCnt    :  String  = ""    
+    var StringMarks         :  String  = ""
     var GlobalImg           : UIImage? = UIImage()
     var StringImgURLs       : [String]? = [String]()
-    var StringVisibleCnt    : String =   ""
-    var postId : Int = 0
-    var StringMarks: String = ""
+    var postId  : Int = 0
+    var catID   : Int = 0
+    var UserID  : Int = 0
+    var index   : Int = 0
+    var cnt     : Int = 0
+    var mess    : Bool = false
+    var IntUser_Marks : Int = 0
+    var senderForMessageSegue : AnyObject? = nil
     
-    func loadDataPost(API: String, parameters : [String: Any])->[[String:AnyObject]]?{
-        var arr : [[String: AnyObject]] = Array()
-      //  var res = true
-        //arr = arrLocal
-        request(baseURL + API, method: .post, parameters: parameters).responseJSON {
-            (responseJSON) in
-        switch responseJSON.result {
-            case .success(_):
-            guard let jsonArray = responseJSON.value as? [String: AnyObject]else {return}
-           // let result = jsonArray["news"] as! [AnyObject]
-            //self.paramDict = result as! [[String : AnyObject]]
-            //self.tableView.reloadData()
-            arr = [jsonArray]
-            print("arr = ",arr)
-           // res = false
-            
-            case .failure(let error):
-            print("Error : ", error)
-            //res = false
-            }
-            
-        }
-        
-       // while (res) {}
-            
-        
-        
-        
-        print("qwerty = ",arr)
-        return arr
- 
-    }
+//    func loadDataPost(API: String, parameters : [String: Any])->[[String:AnyObject]]?{
+//        var arr : [[String: AnyObject]] = Array()
+//      //  var res = true
+//        //arr = arrLocal
+//        request(baseURL + API, method: .post, parameters: parameters).responseJSON {
+//            (responseJSON) in
+//        switch responseJSON.result {
+//            case .success(_):
+//            guard let jsonArray = responseJSON.value as? [String: AnyObject]else {return}
+//           // let result = jsonArray["news"] as! [AnyObject]
+//            //self.paramDict = result as! [[String : AnyObject]]
+//            //self.tableView.reloadData()
+//            arr = [jsonArray]
+//            print("arr = ",arr)
+//           // res = false
+//            
+//            case .failure(let error):
+//            print("Error : ", error)
+//            //res = false
+//            }
+//            
+//        }
+//        
+//       // while (res) {}
+//            
+//        
+//        
+//        
+//        print("qwerty = ",arr)
+//        return arr 
+// 
+//    }
 
     private func loadJSON (API: String)
     {
@@ -188,16 +218,15 @@ class SingleTonUltimateBlood
    
     func loadImg(imgURL: String, img: UIImageView, spinner: UIActivityIndicatorView? = nil, heightConstraint: NSLayoutConstraint? = nil)-> Void {
         
-        spinner?.startAnimating()
-        spinner?.hidesWhenStopped = true
-        if imgURL == "" {return;}
-        var imgurl = imgURL              
+        //spinner?.startAnimating()
+        //spinner?.hidesWhenStopped = true
+//        if imgURL == "" {return;}        
         
-        let urlURL = URL(string: baseURL + imgurl)
+        let urlURL = URL(string: baseURL + imgURL)
         
-        if urlURL == nil {print (String(baseURL + imgurl));
-            print ("invalid url for image !!! АУЕ  ", imgurl); return }
-        print (String(baseURL + imgurl))
+        if urlURL == nil {print (String(baseURL + imgURL));
+            print ("invalid url for image !!! АУЕ  ", imgURL); return }
+        print (String(baseURL + imgURL))
         asyncLoadImage(imageURL: urlURL!,
                        runQueue: DispatchQueue.global(),
                        completionQueue: DispatchQueue.main)
@@ -243,7 +272,7 @@ class SingleTonUltimateBlood
 //                }
 //            }
             
-            spinner?.stopAnimating()
+           // spinner?.stopAnimating()
         }        
     }         
     
@@ -370,6 +399,20 @@ class SingleTonUltimateBlood
         
         return adeq
     }
-
+     func callViewController (controllerName: String) {
+//        var _: SWRevealViewController = self.revealViewController()
+//        let mainstoryboard:UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+//     
+//        var newViewcontroller : UIViewController = UIViewController()
+//      
+//            newViewcontroller = mainstoryboard.instantiateViewController(withIdentifier: "MessageSSSViewController")
+       // callViewController(controllerName: "MessageSSSViewController")
+     
+        
+        
+      //  let newFrontController = UINavigationController.init(rootViewController: newViewcontroller)
+        //sv = UIViewController.displaySpinner(onView: UIApplication.shared.keyWindow!)
+       // revealViewController().pushFrontViewController(newFrontController, animated: true)        
+    }   
 }
 

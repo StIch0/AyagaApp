@@ -16,21 +16,21 @@ class ProfileViewController: UIViewController {
     
     @IBOutlet weak var textFieldPasswd: UITextField!
     @IBOutlet weak var textFieldLogin: UITextField!
+    
     override func viewDidLoad() {
         super.viewDidLoad()                                
-        
         if revealViewController() != nil {                                    
             btnMenuButton.target = revealViewController()                        
             btnMenuButton.action = #selector(SWRevealViewController.revealToggle(_:))                                            
         }
-        if Profile.shared.sign {
-         // let defautls = UserDefaults.standard
-           // print(UserDefaults.standard.string(forKey: "login")!)
-//            textFieldPasswd.text = defautls.string(forKey: "pswd")
-//            textFieldLogin.text = defautls.string(forKey: "login")
-            performSegue(withIdentifier: "segueProfile", sender: self)
-            
-        }
+//        if Profile.shared.sign {
+//         // let defautls = UserDefaults.standard
+//           // print(UserDefaults.standard.string(forKey: "login")!)
+////            textFieldPasswd.text = defautls.string(forKey: "pswd")
+////            textFieldLogin.text = defautls.string(forKey: "login")
+//            performSegue(withIdentifier: "segueProfile", sender: self)
+//            
+//        }
         // Do any additional setup after loading the view.
     }
 
@@ -39,7 +39,7 @@ class ProfileViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     @IBAction func btnLogin(_ sender: Any) {
-        if textFieldLogin.text != "" && textFieldPasswd.text != "" {
+       // if textFieldLogin.text != "" && textFieldPasswd.text != "" {
             request(baseURL + "/api/sign-in", method: .post, parameters: [
                 "login":textFieldLogin.text!,
                 "pass":textFieldPasswd.text!]).responseJSON{
@@ -51,13 +51,17 @@ class ProfileViewController: UIViewController {
                             SingleTonUltimateBlood.shared.showAlert(title: jsonArray["status"] as! String, message: "", viewController: self)
                           }else {
                             Profile.shared.id = jsonArray["id"]! as! Int
+                            Profile.shared.pswd = self.textFieldPasswd.text!
+                            Profile.shared.login = self.textFieldLogin.text!
                             Profile.shared.sign = true
+                            SingleTonUltimateBlood.shared.UserID = Profile.shared.id
+                            print (Profile.shared)
                             self.performSegue(withIdentifier: "segueProfile", sender: self)
                         }
                     case .failure(let error):
                         print("Error = ", error)
                     }
-            }
+            //}
             print("Succes")
            // performSegue(withIdentifier: "segueNews", sender: self)
         }

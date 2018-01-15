@@ -13,29 +13,31 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
     
     @IBOutlet weak var RandomTextUnderPict: UILabel!    
     @IBOutlet weak var tblTableView: UITableView!
-    @IBOutlet weak var imgProfile: UIImageView!        
-//    
-//    var viewControllersDict: [String:String] = ["Новости":"ViewController",
-//                                                "Мой профиль":"ProfileViewController",
-//                                                "Сообщения":"KhuralScheduleViewController",
-//                                                "Лента подписок":"AstrologicalForecastViewController",
-//                                                "Историческая справка":"HistoryTableViewController",
-//                                                "Карта":"LecturesTableViewController",
-//                                                "Создать новость":"VideoAlbumViewController",
-//                                                "Настройки":"DevelopersViewController"]
+    @IBOutlet weak var imgProfile: UIImageView!            
     
+    public static var shared = menuViewController()
     
     var viewControllersDict: [String:[String]] =
         ["Новости":["ViewController","ViewController"],
          "Мой профиль":["ProfileViewController","ProfileDataViewController"],
-         "Сообщения":["KhuralScheduleViewController"],
-         "Лента подписок":["FollowsNewsTableViewController","FollowsNewsTableViewController"],
-         "Историческая справка":["HistoryTableViewController"],
+         "Сообщения":["DialogSSSViewController","DialogSSSViewController"],
+         "Лента подписок":["ViewController","ViewController"],
+         "Историческая справка":["CardsMenuViewController","CardsMenuViewController"],
          "Карта":["MapViewController","MapViewController"],
-         "Создать новость":["VideoAlbumViewController"],
-         "Настройки":["DevelopersViewController"]] 
+         "Создать новость":["CreateFeedViewController","CreateFeedViewController"],
+         "Настройки":["SettingsViewController","SettingsViewController"]] 
     
-    var ManuNameArray:Array = [String]()
+    var ManuNameArray:[String] = [
+        "Новости",
+        "Мой профиль",
+        "Сообщения",
+        "Лента подписок",
+        "Историческая справка",
+        "Карта",
+        "Создать новость",
+        "Настройки"
+    ]
+    
     var iconArray:Array = [UIImage]()   
     var didLoadCalled = true
     
@@ -71,9 +73,9 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print ("MENUUUUU DID LOAD !!!!")
         SingleTonUltimateBlood.shared.setStatusBarColorOrange()
         self.view.layer.shadowRadius = 0;
-        
         
         revealViewController().toggleAnimationType = SWRevealToggleAnimationType.spring
         revealViewController().toggleAnimationDuration = 0.725 //magic numbers ALERT !!!                                                
@@ -83,16 +85,7 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
             revealViewController().draggableBorderWidth = window.frame.width * 0.05         
         }                
         
-        ManuNameArray = [
-            "Новости",
-            "Мой профиль",
-            "Сообщения",
-            "Лента подписок",
-            "Историческая справка",
-            "Карта",
-            "Создать новость",
-            "Настройки"
-        ]
+        
         iconArray = [UIImage(named:"1")!,
                      UIImage(named:"2")!,
                      UIImage(named:"3")!,
@@ -152,7 +145,6 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         handleDissmis()        
         
-        var _: SWRevealViewController = self.revealViewController()
         let cell:MenuCell = tableView.cellForRow(at: indexPath) as! MenuCell
         print(cell.lblMenuname.text!)        
         
@@ -166,7 +158,7 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
         callViewController(controllerName: cell.lblMenuname.text!)
     }
 
-    private func callViewController (controllerName: String) {
+    public func callViewController (controllerName: String) {
         for i in 0...ManuNameArray.count-1 {
             if ManuNameArray[i] == controllerName {
                 SingleTonUltimateBlood.shared.location = i
@@ -177,17 +169,16 @@ class menuViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
         let mainstoryboard:UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
         //        let newViewcontroller = mainstoryboard.instantiateViewController(withIdentifier: viewControllersDict[controllerName][1])var newViewcontroller : UIViewController = UIViewController()
         print(Profile.shared.sign)
-         var newViewcontroller : UIViewController = UIViewController()
+        var newViewcontroller : UIViewController = UIViewController()
         if  !Profile.shared.sign{
             newViewcontroller = mainstoryboard.instantiateViewController(withIdentifier: viewControllersDict[controllerName]![0])
         }
         else {
-            newViewcontroller = mainstoryboard.instantiateViewController(withIdentifier: viewControllersDict[controllerName]![1])
+            newViewcontroller = mainstoryboard.instantiateViewController(withIdentifier: viewControllersDict[controllerName]![0])            
         }
-        
-
+                        
         let newFrontController = UINavigationController.init(rootViewController: newViewcontroller)
         //sv = UIViewController.displaySpinner(onView: UIApplication.shared.keyWindow!)
-        revealViewController().pushFrontViewController(newFrontController, animated: true)
+        revealViewController().pushFrontViewController(newFrontController, animated: true)        
     }    
 }

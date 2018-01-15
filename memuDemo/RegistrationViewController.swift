@@ -19,15 +19,37 @@ class RegistrationViewController: UIViewController {
     @IBOutlet weak var textFieldSity: UITextField!
     @IBOutlet weak var textFieldPhone: UITextField!
     
+    @IBOutlet weak var textField: UITextField!
+    
+    @IBAction func dateTextField(_ sender: UITextField) {
+        let datePicker: UIDatePicker = UIDatePicker()
+        datePicker.datePickerMode = .date
+        sender.inputView = datePicker
+        datePicker.addTarget(self, action: #selector(dateChanged), for: .valueChanged)
+        
+    }
+    func dateChanged (sender: UIDatePicker){
+        let dateFormater = DateFormatter()
+        dateFormater.dateStyle = .medium
+        dateFormater.timeStyle = .none
+        dateFormater.dateFormat = "yyyy-MM-dd"
+        textField.text = dateFormater.string(from: sender.date)
+        dateFormater.date(from: textField.text!)
+    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.view.endEditing(true)
+    }
+    
     @IBAction func btnRegistration(_ sender: Any) {
-        if textFieldName.text != "" && textFieldPsswd.text != "" && textFieldSity.text != "" && textFieldLogin.text != "" && textFieldPhone.text != "" && textFieldSerName.text != "" {
+        if textFieldName.text != "" && textFieldPsswd.text != "" && textFieldSity.text != "" && textFieldLogin.text != "" && textFieldPhone.text != "" && textFieldSerName.text != "" && 
+            textField.text != ""{
             request(baseURL + "/api/sign-up", method: .post, parameters: [
                 "login":textFieldLogin.text!,
                 "pass":textFieldPsswd.text! ,
                 "name":textFieldName.text!,
                 "family":textFieldSerName.text!,
                 "city":textFieldSity.text!,
-                "tel":textFieldPhone.text!]).validate().responseJSON{
+                "birth_date":textField.text!, "tel":textFieldPhone.text!]).validate().responseJSON{
                     responseJSON in
                     switch responseJSON.result {
                     case .success(_):
@@ -44,7 +66,8 @@ class RegistrationViewController: UIViewController {
                                 name: self.textFieldName.text!,
                                 serName: self.textFieldSerName.text!,
                                 phone: self.textFieldPhone.text!,
-                                city: self.textFieldSity.text!,
+                                city: self.textFieldSity.text!, 
+                                birth_date: self.textField.text!,
                                 id: jsonArray["id"] as! Int)
                                 Profile.shared.sign = true
                             Profile.shared.Save()

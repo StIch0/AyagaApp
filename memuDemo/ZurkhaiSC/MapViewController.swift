@@ -9,6 +9,8 @@
 import UIKit
 import MapKit
 import Toaster
+import Alamofire
+import SwiftyJSON
 
 class MapViewController: UIViewController, MKMapViewDelegate {
     
@@ -19,13 +21,12 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     var pagParamDict:[String:[String]] = Dictionary()
     
     let loacManag = CLLocationManager()
-    
-    var polygons = Array<Any>()
-    var points = [CLLocationCoordinate2D]()
+        
     var message = [String]()
-    
+    var color = [UIColor]()
     override func viewDidLoad() {
         super.viewDidLoad()      
+        SingleTonUltimateBlood.shared.senderForMessageSegue = self
         map.mapType = .standard
         map.delegate = self
         map.showsPointsOfInterest = false      
@@ -38,51 +39,90 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         }
         
         
-        points.append(CLLocationCoordinate2D(latitude: 71.0,  longitude: 73.0))
-        points.append(CLLocationCoordinate2D(latitude: 72.0, longitude: 133.0))
-        points.append(CLLocationCoordinate2D(latitude: 49.0, longitude: 123.135214))
-        
-        message.append("alsdfkjal;sdkfj")
-        polygons.append(points)
-        
-        let polygon = MKPolygon(coordinates: &points, count: points.count)
-        
-        map.add(polygon)
+        request(baseURL + "/api/get-map", method: .post).validate().responseJSON { (responseJSON)  in
+            switch responseJSON.result {
+            case .success(_):
+                guard let jsonArray = responseJSON.value as? [String: AnyObject]else {return}
+                let result = jsonArray["map"] as! [AnyObject]
+                //self.paramDict = result as! [[String : AnyObject]]
+                print (result)
+                
+                for strs in result {
+                    var poly = self.convertToDictionary(text: strs as! String)! as [String: AnyObject]                    
+                    var ptss = (poly["geometry"] as! [String: AnyObject])                    
+                    let polygons = ((ptss["coordinates"] as? [[[String]]])!)                    
+                    var props = poly["properties"] as! [String: AnyObject]
+                    
+                    //init polygons                     
+                    for plg in polygons {
+                        var points = [CLLocationCoordinate2D]()
+                        
+                        for pt in plg {
+                            guard let latitude  = NumberFormatter().number(from: pt[1]) else { return }
+                            guard let longitude = NumberFormatter().number(from: pt[0]) else { return }
+                            points.append(CLLocationCoordinate2D(latitude: CLLocationDegrees(latitude), longitude: CLLocationDegrees(longitude)))
+                        }
+                        
+                        let polygon = MKPolygon(coordinates: &points, count: points.count)
+                        
+                        polygon.accessibilityLabel = (props["text"] as? String ?? "")                  
+                        polygon.title = props["color"] as? String
+                        
+                        self.map.add(polygon)
+                    }
+                }
+                
+            case .failure(let error):
+                print("Error : ", error)
+            }
+            
+        }                                
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let renderer = MKPolygonRenderer(overlay: overlay)
         
-        renderer.fillColor = UIColor.blue                
-        renderer.alpha = 0.1
+        renderer.fillColor = UIColor(hexString: overlay.title!!)                
+        renderer.alpha = 0.5
         
         return renderer
     }
     
-    @IBAction func Ooooh_youTouchMyTralala(_ sender: Any) {
+    func convertToDictionary(text: String) -> [String: Any]? {
+        if let data = text.data(using: .utf8) {
+            do {
+                return try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+    
+    
+    @IBAction func Ooooh_youTouchMyTralala /*Ooooooh, my singleton...*/ (_ sender: Any) {
         guard let touch = sender as? UITapGestureRecognizer else {return}
+                
         
         let touchLocation = touch.location(in: map)
         let coords = map.convert(touchLocation, toCoordinateFrom: map)
         
-        for var i in 0...polygons.count-1 {
-            if (isPointOnPolygon(id: i as! Int, pt: coords)) {       
+        let pointtt = MKMapPointForCoordinate(coords)
+        let mapRect = MKMapRectMake(pointtt.x, pointtt.y, 0.0, 0.0);
+        
+        for var plgn in (map.overlays) {
+            let pl = (plgn as? MKPolygon) 
+            if (pl == nil) {continue} 
+            if (pl?.intersects(mapRect))! {
                 if let currentToast = ToastCenter.default.currentToast {
                     currentToast.cancel()
                 }
-                var e = Toast(text: message[i], duration: Delay.long)
+                let e = Toast(text: pl?.accessibilityLabel!, duration: Delay.long)
                 e.show()
-                print (message[i])
-                break
-            }
-        }        
+            }            
+        }
     }
-    
-    func isPointOnPolygon(id: Int, pt: CLLocationCoordinate2D) -> Bool
-    {   
-        return true
-    }
-    
+
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
